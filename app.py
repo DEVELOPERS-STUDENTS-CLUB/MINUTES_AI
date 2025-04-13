@@ -4,9 +4,17 @@ import uuid
 import subprocess
 import google.generativeai as genai
 import speech_recognition as sr
+from dotenv import load_dotenv
+
+# Load environment variables from .env file located in the .venv folder
+dotenv_path = os.path.join(os.path.dirname(__file__), '.venv', '.env')
+load_dotenv(dotenv_path=dotenv_path)
 
 # Configure your Gemini API key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError("GEMINI_API_KEY is not set in the environment variables.")
+genai.configure(api_key=api_key)
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -55,7 +63,7 @@ def upload_audio():
         transcript = "Unsupported audio format or corrupted file."
 
     # Summarize with Gemini
-    model = genai.GenerativeModel("gemini-pro")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     summary_prompt = f"Summarize the following meeting transcript:\n\n{transcript}"
     response = model.generate_content(summary_prompt)
     summary = response.text

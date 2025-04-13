@@ -1,113 +1,146 @@
 <!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Audio Transcription & Summarization</title>
-    <link rel="stylesheet" href="static/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="static/style.css" />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>Audio Transcription & Summarization</h1>
-            <p>Upload your audio file to get a transcript and summary</p>
-        </header>
+      <header>
+        <h1>Audio Transcription & Summarization</h1>
+        <p>Upload your audio file to get a transcript and summary</p>
+      </header>
 
-        <div class="upload-container">
-            <form id="upload-form" enctype="multipart/form-data">
-                <div class="file-input-wrapper">
-                    <input type="file" id="audio-file" name="file" accept="audio/*">
-                    <label for="audio-file">Choose an audio file</label>
-                </div>
-                <button type="submit" id="upload-btn">Transcribe & Summarize</button>
-            </form>
-            <div class="progress-container" id="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
-                <p class="status-text" id="status-text">Processing...</p>
-            </div>
+      <div class="upload-container">
+        <form id="upload-form" enctype="multipart/form-data">
+          <div class="file-input-wrapper">
+            <input type="file" id="audio-file" name="file" accept="audio/*" />
+            <label for="audio-file">Choose an audio file</label>
+          </div>
+          <p class="status-text" id="upload-status-text"></p>
+          <button type="submit" id="upload-btn">Transcribe & Summarize</button>
+        </form>
+        <div class="progress-container" id="progress-container">
+          <div class="progress-bar" id="progress-bar"></div>
+          <p class="status-text" id="processing-status-text"></p>
         </div>
+      </div>
 
-        <div class="results-container">
-            <div class="result-box">
-                <h2>Transcript</h2>
-                <div class="content-box" id="transcript">
-                    <p class="placeholder">Transcript will appear here...</p>
-                </div>
-            </div>
-            <div class="result-box">
-                <h2>Summary</h2>
-                <div class="content-box" id="summary">
-                    <p class="placeholder">Summary will appear here...</p>
-                </div>
-            </div>
+      <div class="results-container">
+        <div class="result-box">
+          <h2>Transcript</h2>
+          <div class="content-box" id="transcript">
+            <p class="placeholder">Transcript will appear here...</p>
+          </div>
         </div>
+        <div class="result-box">
+          <h2>Summary</h2>
+          <div class="content-box" id="summary">
+            <p class="placeholder">Summary will appear here...</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        document.getElementById('upload-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const fileInput = document.getElementById('audio-file');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('Please select a file first');
-                return;
+      document
+        .getElementById("audio-file")
+        .addEventListener("change", function () {
+          const fileInput = document.getElementById("audio-file");
+          const file = fileInput.files[0];
+          const uploadStatusText =
+            document.getElementById("upload-status-text");
+
+          if (file) {
+            // Show success message when a file is selected
+            uploadStatusText.textContent = `File "${file.name}" uploaded successfully!`;
+            uploadStatusText.style.color = "green";
+            uploadStatusText.style.display = "block";
+          } else {
+            // Reset status text if no file is selected
+            uploadStatusText.textContent = "";
+            uploadStatusText.style.display = "none";
+          }
+        });
+
+      document
+        .getElementById("upload-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const fileInput = document.getElementById("audio-file");
+          const file = fileInput.files[0];
+          const processingStatusText = document.getElementById(
+            "processing-status-text"
+          );
+
+          if (!file) {
+            alert("Please select a file first");
+            return;
+          }
+
+          // Show progress
+          const progressContainer =
+            document.getElementById("progress-container");
+          const progressBar = document.getElementById("progress-bar");
+
+          progressContainer.style.display = "block";
+          processingStatusText.textContent = "Processing...";
+          processingStatusText.style.color = "black";
+          processingStatusText.style.display = "block";
+
+          // Simulate progress (since we don't have real-time progress from the API)
+          let progress = 0;
+          const progressInterval = setInterval(() => {
+            progress += 5;
+            if (progress > 90) clearInterval(progressInterval);
+            progressBar.style.width = progress + "%";
+          }, 500);
+
+          // Prepare form data
+          const formData = new FormData();
+          formData.append("file", file);
+
+          try {
+            const response = await fetch("/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            clearInterval(progressInterval);
+            progressBar.style.width = "100%";
+
+            if (!response.ok) {
+              throw new Error("Server error: " + response.status);
             }
-            
-            // Show progress
-            const progressContainer = document.getElementById('progress-container');
-            const progressBar = document.getElementById('progress-bar');
-            const statusText = document.getElementById('status-text');
-            
-            progressContainer.style.display = 'block';
-            statusText.textContent = 'Processing...';
-            
-            // Simulate progress (since we don't have real-time progress from the API)
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 5;
-                if (progress > 90) clearInterval(progressInterval);
-                progressBar.style.width = progress + '%';
-            }, 500);
-            
-            // Prepare form data
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                
-                if (!response.ok) {
-                    throw new Error('Server error: ' + response.status);
-                }
-                
-                const data = await response.json();
-                
-                // Update UI with results
-                document.getElementById('transcript').innerHTML = `<p>${data.transcript}</p>`;
-                document.getElementById('summary').innerHTML = `<p>${data.summary}</p>`;
-                statusText.textContent = 'Complete!';
-                
-                // Hide progress after a moment
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                }, 2000);
-                
-            } catch (error) {
-                clearInterval(progressInterval);
-                statusText.textContent = 'Error: ' + error.message;
-                progressBar.style.width = '100%';
-                progressBar.style.backgroundColor = '#ff4d4d';
-            }
+
+            const data = await response.json();
+
+            // Update UI with results
+            document.getElementById(
+              "transcript"
+            ).innerHTML = `<p>${data.transcript}</p>`;
+            document.getElementById(
+              "summary"
+            ).innerHTML = `<p>${data.summary}</p>`;
+            processingStatusText.textContent = "Complete!";
+            processingStatusText.style.color = "green";
+
+            // Hide progress after a moment
+            setTimeout(() => {
+              progressContainer.style.display = "none";
+            }, 2000);
+          } catch (error) {
+            clearInterval(progressInterval);
+            processingStatusText.textContent = "Error: " + error.message;
+            processingStatusText.style.color = "red";
+            progressBar.style.width = "100%";
+            progressBar.style.backgroundColor = "#ff4d4d";
+          }
         });
     </script>
-</body>
+  </body>
 </html>
